@@ -1,0 +1,66 @@
+<!-- list.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>게시판</title>
+</head>
+<body>
+<h1>게시글 목록</h1>
+
+<ul id="boardList"></ul>
+<div id="pagination"></div>
+<script>
+    function loadPage(page = 1) {
+        fetch(`/api/board/?page=${page}&size=10`)
+            .then(res => res.json())
+            .then(data => {
+                const list = data.data.list;
+                const ul = document.getElementById('boardList');
+                const pagination = document.getElementById('pagination');
+
+                // 기존 목록/페이지 초기화
+                ul.innerHTML = "";
+                pagination.innerHTML = "";
+
+                // 게시글 리스트 렌더링
+                list.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = `${item.title} by ${item.writer}`;
+                    ul.appendChild(li);
+                });
+
+                // 페이징 처리
+                const startNum = data.data.startNum;
+                const endNum = data.data.endNum;
+                const prevBtn = data.data.prevBtn;
+                const nextBtn = data.data.nextBtn;
+
+                if (prevBtn) {
+                    const prev = document.createElement('button');
+                    prev.textContent = "이전";
+                    prev.onclick = () => loadPage(startNum - 1);
+                    pagination.appendChild(prev);
+                }
+
+                for (let i = startNum; i <= endNum; i++) {
+                    const btn = document.createElement('button');
+                    btn.textContent = i;
+                    btn.onclick = () => loadPage(i);
+                    pagination.appendChild(btn);
+                }
+
+                if (nextBtn) {
+                    const next = document.createElement('button');
+                    next.textContent = "다음";
+                    next.onclick = () => loadPage(endNum + 1);
+                    pagination.appendChild(next);
+                }
+            });
+    }
+
+    // 첫 페이지 로드
+    loadPage(1);
+</script>
+
+</body>
+</html>
