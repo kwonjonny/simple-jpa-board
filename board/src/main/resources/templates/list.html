@@ -1,66 +1,213 @@
-<!-- list.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>게시판</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 40px;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        #searchForm {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        #keywordInput {
+            width: 300px;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 25px 0 0 25px;
+            outline: none;
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
+        }
+
+        #searchBtn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 0 25px 25px 0;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #searchBtn:hover {
+            background-color: #45a049;
+        }
+
+        ul#boardList {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul#boardList li {
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        ul#boardList li div {
+            margin: 6px 0;
+        }
+
+        ul#boardList li div strong {
+            display: inline-block;
+            width: 80px;
+            color: #555;
+        }
+
+        #pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #pagination button {
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #pagination button:hover {
+            background-color: #45a049;
+        }
+
+        #topActions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .btn-create {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 15px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 1px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn-create:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 <h1>게시글 목록</h1>
 
+<div id="searchForm">
+    <input type="text" id="keywordInput" placeholder="제목, 내용, 작성자 통합 검색">
+    <button id="searchBtn" onclick="search()">검색</button>
+</div>
+<div id="topActions">
+    <button class="btn-create" onclick="location.href='/board/create'">✏️ 글쓰기</button>
+</div>
 <ul id="boardList"></ul>
 <div id="pagination"></div>
+
 <script>
+    let currentPage = 1;
+    let currentKeyword = "";
+
+    function search() {
+        currentKeyword = $('#keywordInput').val().trim();
+        loadPage(1); // 검색 시 1페이지로 초기화
+    }
+
+    // 엔터 키로도 검색 가능
+    $(document).on('keypress', '#keywordInput', function(e) {
+        if (e.which === 13) search();
+    });
+
     function loadPage(page = 1) {
-        fetch(`/api/board/?page=${page}&size=10`)
-            .then(res => res.json())
-            .then(data => {
+        currentPage = page;
+
+        $.ajax({
+            url: '/api/board/',
+            type: 'GET',
+            data: {
+                page: page,
+                size: 10,
+                type: 'title,content,writer',
+                keyword: currentKeyword
+            },
+            dataType: 'json',
+            success: function(data) {
                 const list = data.data.list;
-                const ul = document.getElementById('boardList');
-                const pagination = document.getElementById('pagination');
+                const ul = $('#boardList');
+                const pagination = $('#pagination');
 
-                // 기존 목록/페이지 초기화
-                ul.innerHTML = "";
-                pagination.innerHTML = "";
+                ul.empty();
+                pagination.empty();
 
-                // 게시글 리스트 렌더링
+                if (!list.length) {
+                    ul.append(`<li><div style="text-align:center;">검색 결과가 없습니다.</div></li>`);
+                    return;
+                }
+
                 list.forEach(item => {
-                    const li = document.createElement('li');
-                    li.textContent = `${item.title} by ${item.writer}`;
-                    ul.appendChild(li);
+                const li = $(`
+                        <li>
+                            <div><strong>번호:</strong> <a href="/board/read?id=${item.boardId}">${item.boardId}</a></div>
+                            <div><strong>제목:</strong> <a href="/board/read?id=${item.boardId}">${item.title}</a></div>
+                        </li>
+                    `);
+                    ul.append(li);
                 });
 
-                // 페이징 처리
                 const startNum = data.data.startNum;
                 const endNum = data.data.endNum;
                 const prevBtn = data.data.prevBtn;
                 const nextBtn = data.data.nextBtn;
 
                 if (prevBtn) {
-                    const prev = document.createElement('button');
-                    prev.textContent = "이전";
-                    prev.onclick = () => loadPage(startNum - 1);
-                    pagination.appendChild(prev);
+                    const prev = $('<button>이전</button>');
+                    prev.on('click', () => loadPage(startNum - 1));
+                    pagination.append(prev);
                 }
 
                 for (let i = startNum; i <= endNum; i++) {
-                    const btn = document.createElement('button');
-                    btn.textContent = i;
-                    btn.onclick = () => loadPage(i);
-                    pagination.appendChild(btn);
+                    const btn = $(`<button>${i}</button>`);
+                    btn.on('click', () => loadPage(i));
+                    pagination.append(btn);
                 }
 
                 if (nextBtn) {
-                    const next = document.createElement('button');
-                    next.textContent = "다음";
-                    next.onclick = () => loadPage(endNum + 1);
-                    pagination.appendChild(next);
+                    const next = $('<button>다음</button>');
+                    next.on('click', () => loadPage(endNum + 1));
+                    pagination.append(next);
                 }
-            });
+            },
+            error: function(xhr, status, error) {
+                console.error("데이터 로드 실패:", error);
+            }
+        });
     }
 
-    // 첫 페이지 로드
-    loadPage(1);
+    $(document).ready(function() {
+        loadPage(1);
+    });
 </script>
-
 </body>
 </html>

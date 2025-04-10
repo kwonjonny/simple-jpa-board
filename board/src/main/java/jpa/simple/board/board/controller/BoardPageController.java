@@ -12,4 +12,19 @@ public class BoardPageController {
     public String boardListPage() {
         return "list";
     }
+
+    @GetMapping("/read")
+    public String boardReadPage() {
+        return "read";
+    }
+
+    @GetMapping("/update")
+    public String boardUpdatePage() {
+        return "update";
+    }
+
+    @GetMapping("/create")
+    public String boardCreatePage() {
+        return "create";
+    }
 }

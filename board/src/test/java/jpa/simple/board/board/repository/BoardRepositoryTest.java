@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
 @SpringBootTest
-public class BoardRepositoryImplTest {
+public class BoardRepositoryTest {
 
     @Autowired(required = false)
     private BoardRepository boardRepository;
