@@ -42,13 +42,13 @@ public class BoardController {
     }
 
     @DeleteMapping("{boardId}")
-    public ResponseEntity<APIResponseDTO<String>> deleteBoard(@PathVariable("boardId") Long boardId) {
+    public ResponseEntity<APIResponseDTO<String>> deleteBoard(@PathVariable("boardId") final Long boardId) {
         final Long deleteResult = boardService.deleteBoard(boardId);
         return APIResponseDTO.ofSuccessDeleteResponse(deleteResult > 0 ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 
     @GetMapping
-    public ResponseEntity<APIResponseDTO<BoardPageResponseDTO<ListBoardDTO>>> listBoard(@ModelAttribute BoardPageRequestDTO requestDTO) {
+    public ResponseEntity<APIResponseDTO<BoardPageResponseDTO<ListBoardDTO>>> listBoard(@ModelAttribute final BoardPageRequestDTO requestDTO) {
         final BoardPageResponseDTO<ListBoardDTO> listResult = boardService.listBoard(requestDTO);
         return APIResponseDTO.ofSuccessResponse(listResult, HttpStatus.OK);
     }
